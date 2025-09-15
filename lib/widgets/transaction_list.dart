@@ -4,30 +4,101 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../data/mock_data.dart';
 import '../models/finance_models.dart';
+import '../screens/add_transaction_page.dart';
 
-// 1. EL WIDGET REUTILIZABLE PRINCIPAL
-class TransactionList extends StatelessWidget {
+class TransactionList extends StatefulWidget {
   final List<Transaction> transactions;
   const TransactionList({super.key, required this.transactions});
 
   @override
+  State<TransactionList> createState() => _TransactionListState();
+}
+
+class _TransactionListState extends State<TransactionList> {
+  late List<Transaction> _transactions;
+
+  @override
+  void initState() {
+    super.initState();
+    _transactions = List.from(widget.transactions);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Usamos ListView.separated para añadir un divisor entre ítems
     return ListView.separated(
-      itemCount: transactions.length,
-      // shrinkWrap y physics son necesarios cuando un ListView está dentro de otro
+      itemCount: _transactions.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        return TransactionListItem(transaction: transaction);
+        final transaction = _transactions[index];
+        // 2. REEMPLAZAMOS DISMISSIBLE CON SLIDABLE
+        return Dismissible(
+          key: Key(transaction.id),
+          direction: DismissDirection.endToStart,
+          onDismissed: (direction) {
+            final removedTransaction = _transactions[index];
+            final removedIndex = index;
+
+            setState(() {
+              _transactions.removeAt(index);
+            });
+
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${transaction.title} eliminado'),
+                action: SnackBarAction(
+                  label: 'Deshacer',
+                  onPressed: () {
+                    setState(() {
+                      _transactions.insert(removedIndex, removedTransaction);
+                    });
+                  },
+                ),
+              ),
+            );
+          },
+          // ESTA ES LA PARTE CLAVE: EL FONDO PERSONALIZADO
+          background: Container(
+            margin: const EdgeInsets.symmetric(
+              vertical: 4,
+            ), // Margen para que se vea redondeado
+            decoration: BoxDecoration(
+              color: Colors.red.shade700,
+              borderRadius: BorderRadius.circular(12), // Bordes redondeados
+            ),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 20.0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Icon(Icons.delete, color: Colors.white),
+              ),
+            ),
+          ),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddTransactionPage(
+                    type: transaction.status == TransactionStatus.Ingreso
+                        ? TransactionType.ingreso
+                        : TransactionType.gasto,
+                    transaction: transaction,
+                  ),
+                ),
+              );
+            },
+            child: TransactionListItem(transaction: transaction),
+          ),
+        );
       },
       separatorBuilder: (context, index) => const Divider(height: 1),
     );
   }
 }
 
-// 2. EL WIDGET PARA UN SOLO ÍTEM (AHORA PÚBLICO)
+// TransactionListItem se mantiene igual
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
   const TransactionListItem({super.key, required this.transaction});
@@ -36,7 +107,6 @@ class TransactionListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final category = mockCategories.firstWhere(
       (cat) => cat.id == transaction.categoryId,
-      // 'orElse' es una medida de seguridad por si no se encuentra la categoría.
       orElse: () => const Category(
         id: 'error',
         title: 'Error',
@@ -76,7 +146,6 @@ class TransactionListItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  // Usamos DateFormat para convertir el DateTime a un String con el formato "día Mes Hora:minuto"
                   DateFormat('d MMM H:mm').format(transaction.date),
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),

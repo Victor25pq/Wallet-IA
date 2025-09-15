@@ -9,7 +9,8 @@ enum TransactionType { ingreso, gasto }
 
 class AddTransactionPage extends StatefulWidget {
   final TransactionType type;
-  const AddTransactionPage({super.key, required this.type});
+  final Transaction? transaction;
+  const AddTransactionPage({super.key, required this.type, this.transaction});
   @override
   State<AddTransactionPage> createState() => _AddTransactionPageState();
 }
@@ -35,10 +36,21 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   int? _selectedCategoryIndex;
 
   @override
-  void dispose() {
-    _amountController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    if (widget.transaction != null) {
+      // Si estamos editando, rellenamos los campos
+      _amountController.text = widget.transaction!.amount.toString();
+      _descriptionController.text = widget.transaction!.title;
+      _selectedAccount = mockAccounts.firstWhere(
+        (acc) => acc.id == widget.transaction!.accountId,
+      );
+      _selectedDate = widget.transaction!.date;
+      _selectedCategoryIndex = mockCategories.indexWhere(
+        (cat) => cat.id == widget.transaction!.categoryId,
+      );
+      if (_selectedCategoryIndex == -1) _selectedCategoryIndex = null;
+    }
   }
 
   // --- 2. LÓGICA PARA EL SELECTOR DE FECHA ---
@@ -142,11 +154,9 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                   ),
                   const SizedBox(height: 10),
                   _CategorySelector(
-                    onCategorySelected: (index) {
-                      setState(() {
-                        _selectedCategoryIndex = index;
-                      });
-                    },
+                    initialIndex: _selectedCategoryIndex,
+                    onCategorySelected: (index) =>
+                        setState(() => _selectedCategoryIndex = index),
                   ),
                   const SizedBox(height: 20),
                   TextField(
@@ -205,13 +215,25 @@ final List<Map<String, dynamic>> categories = [
 
 class _CategorySelector extends StatefulWidget {
   final Function(int) onCategorySelected;
-  const _CategorySelector({required this.onCategorySelected});
+  final int? initialIndex;
+  const _CategorySelector({
+    required this.onCategorySelected,
+    this.initialIndex,
+  });
+
   @override
   State<_CategorySelector> createState() => _CategorySelectorState();
 }
 
 class _CategorySelectorState extends State<_CategorySelector> {
   int? _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    // Asignamos el índice inicial al estado del widget
+    _selectedIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {

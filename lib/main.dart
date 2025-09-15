@@ -49,6 +49,7 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => const TransferPage(),
             );
+
           case '/all_transactions':
             return MaterialPageRoute(
               builder: (context) => const AllTransactionsPage(),

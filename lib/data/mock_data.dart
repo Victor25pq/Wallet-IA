@@ -47,6 +47,7 @@ final List<Category> mockCategories = [
 // LISTA DE TRANSACCIONES ACTUALIZADA
 final List<Transaction> mockTransactions = [
   Transaction(
+    id: 't1',
     accountId: 'bcp',
     categoryId: 'shopping',
     title: 'Zapatillas nuevas',
@@ -55,6 +56,7 @@ final List<Transaction> mockTransactions = [
     status: TransactionStatus.Gasto,
   ),
   Transaction(
+    id: 't2',
     accountId: 'efectivo',
     categoryId: 'food',
     title: 'Almuerzo',
@@ -63,6 +65,7 @@ final List<Transaction> mockTransactions = [
     status: TransactionStatus.Gasto,
   ),
   Transaction(
+    id: 't3',
     accountId: 'bcp',
     categoryId: 'services',
     title: 'Pago de Internet',
@@ -71,6 +74,7 @@ final List<Transaction> mockTransactions = [
     status: TransactionStatus.Gasto,
   ),
   Transaction(
+    id: 't4',
     accountId: 'paypal',
     categoryId: 'shopping',
     title: 'Compra online',
@@ -79,6 +83,7 @@ final List<Transaction> mockTransactions = [
     status: TransactionStatus.Gasto,
   ),
   Transaction(
+    id: 't5',
     accountId: 'binance',
     categoryId: 'others',
     title: 'Ganancia Crypto',

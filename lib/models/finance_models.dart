@@ -5,6 +5,7 @@ enum TransactionStatus { Ingreso, Gasto }
 
 // Una clase 'modelo' para estructurar los datos de una transacción
 class Transaction {
+  final String id;
   final String accountId;
   final String categoryId; // <-- CAMBIADO de 'title' a 'categoryId'
   final String title; // <-- El título ahora es para la descripción específica
@@ -13,6 +14,7 @@ class Transaction {
   final TransactionStatus status;
 
   const Transaction({
+    required this.id,
     required this.accountId,
     required this.categoryId, // <-- AÑADIDO
     required this.title,
