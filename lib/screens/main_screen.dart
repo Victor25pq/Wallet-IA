@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart'; // Asegúrate que la ruta sea correcta
 import 'all_transactions_page.dart';
+import 'settings_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     HomePage(), // Nuestra HomePage real
     AllTransactionsPage(),
     Text('Página de Chat'),
-    Text('Página de Ajustes'),
+    SettingsPage(),
   ];
 
   // 3. Esta función se llama cuando se toca una pestaña

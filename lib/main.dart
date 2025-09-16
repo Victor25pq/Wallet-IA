@@ -1,24 +1,53 @@
-// Importamos el paquete principal de Flutter para usar los widgets de Material Design.
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:login_app/screens/main_screen.dart';
+import 'package:login_app/screens/splash_page.dart'; // Importamos la nueva página
 import 'package:login_app/screens/transfer_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/all_transactions_page.dart';
 
-// El punto de entrada de toda aplicación en Flutter.
 Future<void> main() async {
-  // 3. INICIALIZA FLUTTER Y EL FORMATO DE FECHA
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es_ES', null);
+
+  await Supabase.initialize(
+    url: 'https://icwmnzbkpezpddwqgbbs.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imljd21uemJrcGV6cGRkd3FnYmJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NTQ1MDIsImV4cCI6MjA3MzUzMDUwMn0.f1N7JXkWVT54bTECJA8PDO9IbtJMUHvp7QFU2XwrLkA',
+  );
 
   runApp(const MyApp());
 }
 
-// El widget principal de nuestra aplicación.
-class MyApp extends StatelessWidget {
+final supabase = Supabase.instance.client;
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Escuchamos los cambios de estado de autenticación
+    supabase.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      if (event == AuthChangeEvent.signedIn) {
+        // Cuando el usuario inicia sesión, lo llevamos a '/home'
+        // Esto se disparará después de que el login con Google sea exitoso
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else if (event == AuthChangeEvent.signedOut) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,35 +59,20 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
 
-      // LA NAVEGACIÓN SE GESTIONA AQUÍ
-      home: const LoginPage(),
-      onGenerateRoute: (settings) {
-        // 'settings' contiene el nombre y los argumentos de la ruta que se está pidiendo
-        switch (settings.name) {
-          case '/home':
-            return MaterialPageRoute(builder: (context) => const MainScreen());
-
-          case '/add_transaction':
-            // Este es el 'case' que el error no está encontrando.
-            // Nos aseguramos de que exista y esté escrito correctamente.
-            final type = settings.arguments as TransactionType;
-            return MaterialPageRoute(
-              builder: (context) => AddTransactionPage(type: type),
-            );
-          case '/transfer':
-            return MaterialPageRoute(
-              builder: (context) => const TransferPage(),
-            );
-
-          case '/all_transactions':
-            return MaterialPageRoute(
-              builder: (context) => const AllTransactionsPage(),
-            );
-
-          default:
-            // Una ruta por defecto por si algo falla.
-            return MaterialPageRoute(builder: (context) => const LoginPage());
-        }
+      // La ruta inicial ahora es la splash page
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashPage(),
+        '/login': (context) => const LoginPage(),
+        '/home': (context) => const MainScreen(),
+        // Mantenemos tus otras rutas
+        '/add_transaction': (context) {
+          final type =
+              ModalRoute.of(context)!.settings.arguments as TransactionType;
+          return AddTransactionPage(type: type);
+        },
+        '/transfer': (context) => const TransferPage(),
+        '/all_transactions': (context) => const AllTransactionsPage(),
       },
     );
   }

@@ -32,8 +32,12 @@ class PieChartLegend extends StatelessWidget {
         final categoryId = entry.key;
         final category = mockCategories.firstWhere(
           (cat) => cat.id == categoryId,
-          orElse: () =>
-              const Category(id: 'error', title: 'Error', icon: Icons.error),
+          orElse: () => const Category(
+            id: 'error',
+            title: 'Error',
+            icon: Icons.error,
+            type: 'Gasto',
+          ),
         );
         final percentage = (entry.value / totalExpenses * 100);
         final isSelected = category.title == selectedCategoryTitle;

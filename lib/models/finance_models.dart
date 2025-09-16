@@ -43,6 +43,12 @@ class Category {
   final String id;
   final String title;
   final IconData icon;
+  final String type;
 
-  const Category({required this.id, required this.title, required this.icon});
+  const Category({
+    required this.id,
+    required this.title,
+    required this.icon,
+    required this.type,
+  });
 }

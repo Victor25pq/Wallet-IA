@@ -111,6 +111,7 @@ class TransactionListItem extends StatelessWidget {
         id: 'error',
         title: 'Error',
         icon: Icons.error_outline,
+        type: '',
       ),
     );
     final currencyFormatter = NumberFormat.currency(

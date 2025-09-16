@@ -22,26 +22,54 @@ final List<Account> mockAccounts = const [
 
 // NUEVA LISTA DE CATEGORÍAS
 final List<Category> mockCategories = [
-  const Category(id: 'food', title: 'Comida', icon: Icons.fastfood_outlined),
+  const Category(
+    id: 'food',
+    title: 'Comida',
+    icon: Icons.fastfood_outlined,
+    type: 'Gasto',
+  ),
   const Category(
     id: 'services',
     title: 'Servicios',
     icon: Icons.receipt_long_outlined,
+    type: 'Gasto',
   ),
   const Category(
     id: 'transport',
     title: 'Transporte',
     icon: Icons.directions_bus_outlined,
+    type: 'Gasto',
   ),
   const Category(
     id: 'shopping',
     title: 'Compras',
     icon: Icons.shopping_bag_outlined,
+    type: 'Gasto',
   ),
-  const Category(id: 'housing', title: 'Alquiler', icon: Icons.home_outlined),
-  const Category(id: 'health', title: 'Salud', icon: Icons.healing_outlined),
-  const Category(id: 'clothing', title: 'Ropa', icon: Icons.checkroom),
-  const Category(id: 'others', title: 'Otros', icon: Icons.more_horiz),
+  const Category(
+    id: 'housing',
+    title: 'Alquiler',
+    icon: Icons.home_outlined,
+    type: 'Gasto',
+  ),
+  const Category(
+    id: 'health',
+    title: 'Salud',
+    icon: Icons.healing_outlined,
+    type: 'Gasto',
+  ),
+  const Category(
+    id: 'clothing',
+    title: 'Ropa',
+    icon: Icons.checkroom,
+    type: 'Ingreso',
+  ),
+  const Category(
+    id: 'others',
+    title: 'Otros',
+    icon: Icons.more_horiz,
+    type: 'Gasto',
+  ),
 ];
 
 // LISTA DE TRANSACCIONES ACTUALIZADA
