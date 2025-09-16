@@ -2,8 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:login_app/models/finance_models.dart';
 import 'package:login_app/screens/main_screen.dart';
-import 'package:login_app/screens/splash_page.dart'; // Importamos la nueva página
+import 'package:login_app/screens/splash_page.dart';
 import 'package:login_app/screens/transfer_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_page.dart';
@@ -34,22 +35,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   @override
-  void initState() {
-    super.initState();
-    // Escuchamos los cambios de estado de autenticación
-    supabase.auth.onAuthStateChange.listen((data) {
-      final event = data.event;
-      if (event == AuthChangeEvent.signedIn) {
-        // Cuando el usuario inicia sesión, lo llevamos a '/home'
-        // Esto se disparará después de que el login con Google sea exitoso
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else if (event == AuthChangeEvent.signedOut) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'WalletIA',
@@ -58,18 +43,20 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-
-      // La ruta inicial ahora es la splash page
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashPage(),
         '/login': (context) => const LoginPage(),
         '/home': (context) => const MainScreen(),
-        // Mantenemos tus otras rutas
         '/add_transaction': (context) {
-          final type =
-              ModalRoute.of(context)!.settings.arguments as TransactionType;
-          return AddTransactionPage(type: type);
+          // ACTUALIZADO: Leemos el mapa de argumentos
+          final args =
+              ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>;
+          final type = args['type'] as TransactionType;
+          final account = args['account'] as Account?;
+
+          return AddTransactionPage(type: type, preselectedAccount: account);
         },
         '/transfer': (context) => const TransferPage(),
         '/all_transactions': (context) => const AllTransactionsPage(),

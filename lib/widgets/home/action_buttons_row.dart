@@ -1,10 +1,18 @@
 // lib/widgets/home/action_buttons_row.dart
 
 import 'package:flutter/material.dart';
-import '../../screens/add_transaction_page.dart'; // Necesario para TransactionType
+import '../../models/finance_models.dart';
 
 class ActionButtonsRow extends StatelessWidget {
-  const ActionButtonsRow({super.key});
+  final Account selectedAccount;
+  // AÑADIDO: Callback para notificar cuando una transacción se guarda
+  final VoidCallback onTransactionSaved;
+
+  const ActionButtonsRow({
+    super.key,
+    required this.selectedAccount,
+    required this.onTransactionSaved,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +28,16 @@ class ActionButtonsRow extends StatelessWidget {
               Navigator.pushNamed(
                 context,
                 '/add_transaction',
-                arguments: TransactionType.ingreso,
-              );
+                arguments: {
+                  'type': TransactionType.ingreso,
+                  'account': selectedAccount,
+                },
+              ).then((result) {
+                // Si la pantalla de transacción devuelve 'true', refrescamos los datos
+                if (result == true) {
+                  onTransactionSaved();
+                }
+              });
             },
           ),
           const SizedBox(width: 12),
@@ -33,8 +49,16 @@ class ActionButtonsRow extends StatelessWidget {
               Navigator.pushNamed(
                 context,
                 '/add_transaction',
-                arguments: TransactionType.gasto,
-              );
+                arguments: {
+                  'type': TransactionType.gasto,
+                  'account': selectedAccount,
+                },
+              ).then((result) {
+                // Si la pantalla de transacción devuelve 'true', refrescamos los datos
+                if (result == true) {
+                  onTransactionSaved();
+                }
+              });
             },
           ),
           const SizedBox(width: 12),
@@ -51,6 +75,7 @@ class ActionButtonsRow extends StatelessWidget {
   }
 }
 
+// ... El widget _ActionButton se mantiene igual ...
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;

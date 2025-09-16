@@ -9,15 +9,29 @@ final List<Account> mockAccounts = const [
     name: 'BCP',
     balance: 5250.50,
     icon: Icons.account_balance,
+    currency: 'PEN',
   ),
-  Account(id: 'paypal', name: 'PayPal', balance: 320.00, icon: Icons.paypal),
+  Account(
+    id: 'paypal',
+    name: 'PayPal',
+    balance: 320.00,
+    icon: Icons.paypal,
+    currency: 'PEN',
+  ),
   Account(
     id: 'binance',
     name: 'Binance',
     balance: 7000.00,
     icon: Icons.currency_bitcoin,
+    currency: 'PEN',
   ),
-  Account(id: 'efectivo', name: 'Efectivo', balance: 80.50, icon: Icons.wallet),
+  Account(
+    id: 'efectivo',
+    name: 'Efectivo',
+    balance: 80.50,
+    icon: Icons.wallet,
+    currency: 'PEN',
+  ),
 ];
 
 // NUEVA LISTA DE CATEGORÍAS
@@ -76,7 +90,7 @@ final List<Category> mockCategories = [
 final List<Transaction> mockTransactions = [
   Transaction(
     id: 't1',
-    accountId: 'bcp',
+    walletId: 'bcp',
     categoryId: 'shopping',
     title: 'Zapatillas nuevas',
     date: DateTime.now().subtract(const Duration(days: 2)),
@@ -85,7 +99,7 @@ final List<Transaction> mockTransactions = [
   ),
   Transaction(
     id: 't2',
-    accountId: 'efectivo',
+    walletId: 'efectivo',
     categoryId: 'food',
     title: 'Almuerzo',
     date: DateTime.now().subtract(const Duration(days: 5)),
@@ -94,7 +108,7 @@ final List<Transaction> mockTransactions = [
   ),
   Transaction(
     id: 't3',
-    accountId: 'bcp',
+    walletId: 'bcp',
     categoryId: 'services',
     title: 'Pago de Internet',
     date: DateTime.now().subtract(const Duration(days: 10)),
@@ -103,7 +117,7 @@ final List<Transaction> mockTransactions = [
   ),
   Transaction(
     id: 't4',
-    accountId: 'paypal',
+    walletId: 'paypal',
     categoryId: 'shopping',
     title: 'Compra online',
     date: DateTime.now().subtract(const Duration(days: 40)),
@@ -112,7 +126,7 @@ final List<Transaction> mockTransactions = [
   ),
   Transaction(
     id: 't5',
-    accountId: 'binance',
+    walletId: 'binance',
     categoryId: 'others',
     title: 'Ganancia Crypto',
     date: DateTime.now().subtract(const Duration(days: 60)),

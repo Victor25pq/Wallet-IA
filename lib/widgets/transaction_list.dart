@@ -1,10 +1,11 @@
-// En lib/widgets/transaction_list.dart
+// lib/widgets/transaction_list.dart
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../data/mock_data.dart';
 import '../models/finance_models.dart';
-import '../screens/add_transaction_page.dart';
+// USAMOS 'hide' PARA OCULTAR LA DEFINICIÓN ANTIGUA Y EVITAR EL CONFLICTO
+import '../screens/add_transaction_page.dart' hide TransactionType;
 
 class TransactionList extends StatefulWidget {
   final List<Transaction> transactions;
@@ -31,7 +32,6 @@ class _TransactionListState extends State<TransactionList> {
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
         final transaction = _transactions[index];
-        // 2. REEMPLAZAMOS DISMISSIBLE CON SLIDABLE
         return Dismissible(
           key: Key(transaction.id),
           direction: DismissDirection.endToStart,
@@ -58,14 +58,11 @@ class _TransactionListState extends State<TransactionList> {
               ),
             );
           },
-          // ESTA ES LA PARTE CLAVE: EL FONDO PERSONALIZADO
           background: Container(
-            margin: const EdgeInsets.symmetric(
-              vertical: 4,
-            ), // Margen para que se vea redondeado
+            margin: const EdgeInsets.symmetric(vertical: 4),
             decoration: BoxDecoration(
               color: Colors.red.shade700,
-              borderRadius: BorderRadius.circular(12), // Bordes redondeados
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Padding(
               padding: EdgeInsets.only(right: 20.0),
@@ -98,7 +95,6 @@ class _TransactionListState extends State<TransactionList> {
   }
 }
 
-// TransactionListItem se mantiene igual
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
   const TransactionListItem({super.key, required this.transaction});
@@ -115,8 +111,8 @@ class TransactionListItem extends StatelessWidget {
       ),
     );
     final currencyFormatter = NumberFormat.currency(
-      locale: 'en_US',
-      symbol: '\$',
+      locale: 'es_PE', // Cambiado a Soles Peruanos
+      symbol: 'S/ ',
     );
     final bool isIncome = transaction.status == TransactionStatus.Ingreso;
     final String sign = isIncome ? '+' : '-';

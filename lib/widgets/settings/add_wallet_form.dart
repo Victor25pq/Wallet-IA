@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:login_app/models/finance_models.dart';
 import 'package:login_app/services/supabase_service.dart';
+import 'package:login_app/utils/icon_helper.dart';
 
-// Lista de íconos disponibles para que el usuario elija.
 const List<IconData> walletIcons = [
   Icons.account_balance_wallet,
   Icons.savings,
@@ -16,7 +16,9 @@ const List<IconData> walletIcons = [
 ];
 
 class AddWalletForm extends StatefulWidget {
-  const AddWalletForm({super.key});
+  final Account? walletToEdit;
+
+  const AddWalletForm({super.key, this.walletToEdit});
 
   @override
   State<AddWalletForm> createState() => _AddWalletFormState();
@@ -28,26 +30,51 @@ class _AddWalletFormState extends State<AddWalletForm> {
   final _balanceController = TextEditingController();
   final SupabaseService _supabaseService = SupabaseService();
 
-  // Estado para la selección
-  int _selectedCurrencyIndex = 0; // 0 para Soles, 1 para Dólares
+  int _selectedCurrencyIndex = 0;
   IconData _selectedIcon = walletIcons.first;
-
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.walletToEdit != null) {
+      _nameController.text = widget.walletToEdit!.name;
+      _balanceController.text = widget.walletToEdit!.balance.toString();
+      _selectedIcon = widget.walletToEdit!.icon;
+      // --- LÓGICA DE MONEDA AÑADIDA ---
+      if (widget.walletToEdit!.currency == 'USD') {
+        _selectedCurrencyIndex = 1;
+      } else {
+        _selectedCurrencyIndex = 0;
+      }
+    }
+  }
 
   Future<void> _saveWallet() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        // AÑADE EL TIPO 'Account' EXPLÍCITAMENTE AQUÍ
-        final Account newWallet = await _supabaseService.addWallet(
-          name: _nameController.text,
-          currency: _selectedCurrencyIndex == 0 ? 'PEN' : 'USD',
-          initialBalance: double.tryParse(_balanceController.text) ?? 0.0,
-          iconName: _selectedIcon.codePoint.toString(),
-        );
+        final double balance = double.tryParse(_balanceController.text) ?? 0.0;
+        final String iconName = _selectedIcon.codePoint.toString();
+        final String currency = _selectedCurrencyIndex == 0 ? 'PEN' : 'USD';
 
-        if (mounted) {
-          Navigator.of(context).pop(newWallet);
+        if (widget.walletToEdit == null) {
+          final newWallet = await _supabaseService.addWallet(
+            name: _nameController.text,
+            currency: currency,
+            initialBalance: balance,
+            iconName: iconName,
+          );
+          if (mounted) Navigator.of(context).pop(newWallet);
+        } else {
+          final updatedWallet = await _supabaseService.updateWallet(
+            id: widget.walletToEdit!.id,
+            name: _nameController.text,
+            currency: currency,
+            initialBalance: balance,
+            iconName: iconName,
+          );
+          if (mounted) Navigator.of(context).pop(updatedWallet);
         }
       } catch (e) {
         if (mounted) {
@@ -73,7 +100,6 @@ class _AddWalletFormState extends State<AddWalletForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // Padding para que el teclado no tape el formulario
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
         top: 20,
@@ -83,23 +109,24 @@ class _AddWalletFormState extends State<AddWalletForm> {
       child: Form(
         key: _formKey,
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Para que ocupe el mínimo espacio
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- CAMPO: NOMBRE DE LA BILLETERA ---
             TextFormField(
               controller: _nameController,
               autofocus: true,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Nombre de la billetera',
                 border: InputBorder.none,
+                labelText: widget.walletToEdit != null
+                    ? 'Editando Billetera'
+                    : null,
               ),
               validator: (value) => value!.isEmpty ? 'Ingresa un nombre' : null,
             ),
             const SizedBox(height: 16),
 
-            // --- SELECTOR DE MONEDA ---
             ToggleButtons(
               isSelected: [
                 _selectedCurrencyIndex == 0,
@@ -121,7 +148,6 @@ class _AddWalletFormState extends State<AddWalletForm> {
             ),
             const SizedBox(height: 16),
 
-            // --- CAMPO: MONTO INICIAL ---
             TextFormField(
               controller: _balanceController,
               decoration: const InputDecoration(
@@ -135,14 +161,13 @@ class _AddWalletFormState extends State<AddWalletForm> {
             ),
             const SizedBox(height: 24),
 
-            // --- SELECTOR DE ÍCONOS ---
             const Text('Elige un ícono:', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 16,
               runSpacing: 16,
               children: walletIcons.map((icon) {
-                final isSelected = _selectedIcon == icon;
+                final isSelected = _selectedIcon.codePoint == icon.codePoint;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedIcon = icon),
                   child: CircleAvatar(
@@ -162,7 +187,6 @@ class _AddWalletFormState extends State<AddWalletForm> {
             ),
             const SizedBox(height: 24),
 
-            // --- BOTONES DE ACCIÓN ---
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [

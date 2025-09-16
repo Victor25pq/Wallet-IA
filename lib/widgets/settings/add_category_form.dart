@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:login_app/models/finance_models.dart';
 import 'package:login_app/services/supabase_service.dart';
 
-// Lista de íconos de categorías para elegir.
 const List<IconData> categoryIcons = [
   Icons.fastfood,
   Icons.local_bar,
@@ -33,7 +32,11 @@ const List<IconData> categoryIcons = [
 ];
 
 class AddCategoryForm extends StatefulWidget {
-  const AddCategoryForm({super.key});
+  final Category? categoryToEdit;
+  // NUEVO PARÁMETRO
+  final TransactionType? preselectedType;
+
+  const AddCategoryForm({super.key, this.categoryToEdit, this.preselectedType});
 
   @override
   State<AddCategoryForm> createState() => _AddCategoryFormState();
@@ -44,22 +47,47 @@ class _AddCategoryFormState extends State<AddCategoryForm> {
   final _nameController = TextEditingController();
   final SupabaseService _supabaseService = SupabaseService();
 
-  // Estado para la selección
-  int _selectedTypeIndex = 0; // 0 para Gasto, 1 para Ingreso
+  int _selectedTypeIndex = 0;
   IconData _selectedIcon = categoryIcons.first;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.categoryToEdit != null) {
+      _nameController.text = widget.categoryToEdit!.title;
+      _selectedIcon = widget.categoryToEdit!.icon;
+      _selectedTypeIndex = widget.categoryToEdit!.type == 'gasto' ? 0 : 1;
+    } else if (widget.preselectedType != null) {
+      // Si hay un tipo preseleccionado (y no estamos editando), lo usamos
+      _selectedTypeIndex = widget.preselectedType == TransactionType.gasto
+          ? 0
+          : 1;
+    }
+  }
 
   Future<void> _saveCategory() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        final Category newCategory = await _supabaseService.addCategory(
-          name: _nameController.text,
-          type: _selectedTypeIndex == 0 ? 'gasto' : 'ingreso',
-          iconName: _selectedIcon.codePoint.toString(),
-        );
-        if (mounted) {
-          Navigator.of(context).pop(newCategory);
+        final String type = _selectedTypeIndex == 0 ? 'gasto' : 'ingreso';
+        final String iconName = _selectedIcon.codePoint.toString();
+
+        if (widget.categoryToEdit == null) {
+          final newCategory = await _supabaseService.addCategory(
+            name: _nameController.text,
+            type: type,
+            iconName: iconName,
+          );
+          if (mounted) Navigator.of(context).pop(newCategory);
+        } else {
+          final updatedCategory = await _supabaseService.updateCategory(
+            id: widget.categoryToEdit!.id,
+            name: _nameController.text,
+            type: type,
+            iconName: iconName,
+          );
+          if (mounted) Navigator.of(context).pop(updatedCategory);
         }
       } catch (e) {
         if (mounted) {
@@ -96,62 +124,66 @@ class _AddCategoryFormState extends State<AddCategoryForm> {
       child: Form(
         key: _formKey,
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Ocupa el mínimo espacio vertical
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- CAMPO: NOMBRE DE LA CATEGORÍA ---
             TextFormField(
               controller: _nameController,
               autofocus: true,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Nombre de la categoría',
                 border: InputBorder.none,
+                labelText: widget.categoryToEdit != null
+                    ? 'Editando Categoría'
+                    : null,
               ),
               validator: (value) => value!.isEmpty ? 'Ingresa un nombre' : null,
             ),
             const SizedBox(height: 16),
 
-            // --- SELECTOR DE TIPO (GASTO/INGRESO) ---
-            ToggleButtons(
-              isSelected: [_selectedTypeIndex == 0, _selectedTypeIndex == 1],
-              onPressed: (index) => setState(() => _selectedTypeIndex = index),
-              borderRadius: BorderRadius.circular(8),
-              selectedColor: Colors.white,
-              color: Colors.grey[600],
-              fillColor: _selectedTypeIndex == 0 ? expenseColor : incomeColor,
-              selectedBorderColor: _selectedTypeIndex == 0
-                  ? expenseColor
-                  : incomeColor,
-              children: const [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('Gasto'),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('Ingreso'),
-                ),
-              ],
-            ),
+            // --- LÓGICA DE VISIBILIDAD AÑADIDA ---
+            // El selector solo aparece si no hay un tipo preseleccionado
+            if (widget.preselectedType == null)
+              ToggleButtons(
+                isSelected: [_selectedTypeIndex == 0, _selectedTypeIndex == 1],
+                onPressed: (index) =>
+                    setState(() => _selectedTypeIndex = index),
+                borderRadius: BorderRadius.circular(8),
+                selectedColor: Colors.white,
+                color: Colors.grey[600],
+                fillColor: _selectedTypeIndex == 0 ? expenseColor : incomeColor,
+                selectedBorderColor: _selectedTypeIndex == 0
+                    ? expenseColor
+                    : incomeColor,
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('Gasto'),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('Ingreso'),
+                  ),
+                ],
+              ),
             const SizedBox(height: 24),
 
-            // --- SELECTOR DE ÍCONOS (MODIFICADO) ---
             const Text('Elige un ícono:', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 8),
             SizedBox(
-              height: 120, // Altura fija para 2 filas de íconos
+              height: 120,
               child: GridView.builder(
-                scrollDirection: Axis.horizontal, // Desplazamiento horizontal
+                scrollDirection: Axis.horizontal,
                 itemCount: categoryIcons.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // 2 filas
+                  crossAxisCount: 2,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
                 ),
                 itemBuilder: (context, index) {
                   final icon = categoryIcons[index];
-                  final isSelected = _selectedIcon == icon;
+                  final isSelected = _selectedIcon.codePoint == icon.codePoint;
                   return GestureDetector(
                     onTap: () => setState(() => _selectedIcon = icon),
                     child: CircleAvatar(
@@ -172,7 +204,6 @@ class _AddCategoryFormState extends State<AddCategoryForm> {
             ),
             const SizedBox(height: 24),
 
-            // --- BOTONES DE ACCIÓN ---
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [

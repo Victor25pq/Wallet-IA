@@ -5,7 +5,6 @@ import 'package:flutter/rendering.dart';
 import 'package:login_app/models/finance_models.dart';
 import 'package:login_app/services/supabase_service.dart';
 
-//Widgets creados
 import 'package:login_app/widgets/home/balance_card.dart';
 import 'package:login_app/widgets/home/home_header.dart';
 import 'package:login_app/widgets/home/action_buttons_row.dart';
@@ -19,43 +18,88 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Creamos una instancia de nuestro servicio
   final SupabaseService _supabaseService = SupabaseService();
-  // Este Future contendrá los datos de la base de datos
-  late Future<List<Account>> _walletsFuture;
+  // Ahora el Future cargará una lista de resultados (billeteras y transacciones)
+  late Future<List<dynamic>> _dataFuture;
 
-  // Los demás estados se mantienen igual
-  final Account _allAccounts = const Account(
+  final Account _allAccountsPlaceholder = const Account(
     id: 'all',
     name: 'Total Balance',
     balance: 0,
     icon: Icons.all_inclusive,
+    currency: 'USD',
   );
   late Account _selectedAccount;
-  late double _totalBalance;
+
   late ScrollController _scrollController;
   bool _isFabVisible = true;
 
   @override
   void initState() {
     super.initState();
-    // En lugar de usar datos mock, llamamos a nuestro servicio.
-    // El FutureBuilder se encargará del resto.
-    _walletsFuture = _supabaseService.getWallets();
-
-    _selectedAccount = _allAccounts;
-    _totalBalance = 0; // Se calculará cuando los datos lleguen
+    _selectedAccount = _allAccountsPlaceholder;
+    _dataFuture = _loadData(); // Carga inicial
 
     _scrollController = ScrollController();
     _scrollController.addListener(() {
-      if (_scrollController.position.userScrollDirection ==
-          ScrollDirection.reverse) {
-        if (_isFabVisible) setState(() => _isFabVisible = false);
-      } else if (_scrollController.position.userScrollDirection ==
-          ScrollDirection.forward) {
-        if (!_isFabVisible) setState(() => _isFabVisible = true);
+      final direction = _scrollController.position.userScrollDirection;
+      if (direction == ScrollDirection.reverse && _isFabVisible) {
+        setState(() => _isFabVisible = false);
+      } else if (direction == ScrollDirection.forward && !_isFabVisible) {
+        setState(() => _isFabVisible = true);
       }
     });
+  }
+
+  // Función que carga todos los datos necesarios
+  Future<List<dynamic>> _loadData() {
+    return Future.wait([
+      _supabaseService.getWallets(),
+      _supabaseService.getTransactions(),
+    ]);
+  }
+
+  // Función para refrescar los datos
+  void _refreshData() {
+    setState(() {
+      _dataFuture = _loadData();
+    });
+  }
+
+  // --- NUEVO: Lógica para calcular el balance real ---
+  List<Account> _calculateRealBalances(
+    List<Account> wallets,
+    List<Transaction> transactions,
+  ) {
+    Map<String, double> balanceDeltas = {};
+
+    // Calculamos los cambios de balance por cada billetera
+    for (var transaction in transactions) {
+      final amount = transaction.status == TransactionStatus.Ingreso
+          ? transaction.amount
+          : -transaction.amount;
+      balanceDeltas.update(
+        transaction.walletId,
+        (value) => value + amount,
+        ifAbsent: () => amount,
+      );
+    }
+
+    // Creamos una nueva lista de billeteras con los balances actualizados
+    List<Account> updatedWallets = [];
+    for (var wallet in wallets) {
+      final newBalance = wallet.balance + (balanceDeltas[wallet.id] ?? 0);
+      updatedWallets.add(
+        Account(
+          id: wallet.id,
+          name: wallet.name,
+          balance: newBalance,
+          icon: wallet.icon,
+          currency: wallet.currency,
+        ),
+      );
+    }
+    return updatedWallets;
   }
 
   @override
@@ -74,35 +118,42 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        // USAMOS FUTUREBUILDER PARA MANEJAR LA CARGA DE DATOS
-        child: FutureBuilder<List<Account>>(
-          future: _walletsFuture,
+        child: FutureBuilder<List<dynamic>>(
+          future: _dataFuture,
           builder: (context, snapshot) {
-            // ESTADO 1: Cargando...
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // ESTADO 2: Error
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             }
 
-            // ESTADO 3: Datos recibidos correctamente
             if (snapshot.hasData) {
-              final accounts = snapshot.data!;
-              _totalBalance = accounts.fold(
-                0,
+              final wallets = snapshot.data![0] as List<Account>;
+              final transactions = snapshot.data![1] as List<Transaction>;
+
+              // Calculamos los balances reales
+              final updatedWallets = _calculateRealBalances(
+                wallets,
+                transactions,
+              );
+
+              // Calculamos el balance total
+              final totalBalance = updatedWallets.fold(
+                0.0,
                 (sum, account) => sum + account.balance,
               );
 
-              // Aquí va la UI que ya tenías, pero usando los datos reales 'accounts'
+              // Determinamos qué balance mostrar
               final balanceToShow = _selectedAccount.id == 'all'
-                  ? _totalBalance
-                  : _selectedAccount.balance;
-
-              // En un futuro, aquí también cargaríamos las transacciones
-              final displayedTransactions = <Transaction>[];
+                  ? totalBalance
+                  : updatedWallets
+                        .firstWhere(
+                          (w) => w.id == _selectedAccount.id,
+                          orElse: () => _selectedAccount,
+                        )
+                        .balance;
 
               return ListView(
                 controller: _scrollController,
@@ -113,21 +164,30 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 30),
                   BalanceCard(
                     balance: balanceToShow,
-                    accounts: accounts, // Pasamos las cuentas reales
-                    allAccountsOption: _allAccounts,
+                    accounts: updatedWallets,
+                    allAccountsOption: _allAccountsPlaceholder,
                     onAccountSelected: _onAccountSelected,
-                    selectedAccount: _selectedAccount,
+                    selectedAccount: _selectedAccount.id == 'all'
+                        ? _allAccountsPlaceholder
+                        : updatedWallets.firstWhere(
+                            (w) => w.id == _selectedAccount.id,
+                          ),
                   ),
                   const SizedBox(height: 30),
-                  const ActionButtonsRow(),
+                  ActionButtonsRow(
+                    selectedAccount: _selectedAccount,
+                    onTransactionSaved:
+                        _refreshData, // Pasamos la función de refresco
+                  ),
                   const SizedBox(height: 30),
-                  TransactionSection(transactions: displayedTransactions),
+                  TransactionSection(
+                    transactions: transactions,
+                  ), // Mostramos las transacciones
                   const SizedBox(height: 20),
                 ],
               );
             }
 
-            // Estado por defecto (no debería llegar aquí)
             return const Center(child: Text('Iniciando...'));
           },
         ),

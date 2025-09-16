@@ -1,22 +1,25 @@
+// lib/models/finance_models.dart
 import 'package:flutter/material.dart';
 
-// Un 'enum' para definir los posibles estados de una transacción
 enum TransactionStatus { Ingreso, Gasto }
 
-// Una clase 'modelo' para estructurar los datos de una transacción
+enum TransactionType { ingreso, gasto }
+
 class Transaction {
   final String id;
-  final String accountId;
-  final String categoryId; // <-- CAMBIADO de 'title' a 'categoryId'
-  final String title; // <-- El título ahora es para la descripción específica
-  final DateTime date; // <-- CAMBIADO de String a DateTime
+  // CAMBIADO: de accountId a walletId
+  final String walletId;
+  final String categoryId;
+  final String title;
+  final DateTime date;
   final double amount;
   final TransactionStatus status;
 
   const Transaction({
     required this.id,
-    required this.accountId,
-    required this.categoryId, // <-- AÑADIDO
+    // CAMBIADO: de accountId a walletId
+    required this.walletId,
+    required this.categoryId,
     required this.title,
     required this.date,
     required this.amount,
@@ -24,18 +27,20 @@ class Transaction {
   });
 }
 
-// Modelo para una Cuenta Bancaria o Billetera
+// ... El resto del archivo se mantiene igual ...
 class Account {
   final String id;
   final String name;
   final double balance;
   final IconData icon;
+  final String currency;
 
   const Account({
     required this.id,
     required this.name,
     required this.balance,
     required this.icon,
+    required this.currency,
   });
 }
 

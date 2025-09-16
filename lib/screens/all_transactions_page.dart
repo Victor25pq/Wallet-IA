@@ -55,7 +55,7 @@ class _AllTransactionsPageState extends State<AllTransactionsPage> {
     ) {
       final accountFilterPassed =
           _selectedAccountId == null ||
-          transaction.accountId == _selectedAccountId;
+          transaction.walletId == _selectedAccountId;
       if (!accountFilterPassed) return false;
 
       if (_selectedTimeFilter != TimeFilter.allTime) {
