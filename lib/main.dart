@@ -1,5 +1,6 @@
 // lib/main.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:login_app/models/finance_models.dart';
@@ -34,6 +35,32 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  StreamSubscription<AuthState>? _authStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _recoverSession();
+  }
+
+  @override
+  void dispose() {
+    // Es importante cancelar la suscripción para evitar fugas de memoria
+    _authStateSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _recoverSession() {
+    // Esta función se asegura de que la sesión se restaure
+    // cuando la app vuelve del navegador después del login.
+    _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
+      final session = data.session;
+      // No necesitamos hacer nada aquí, el SplashPage se encargará de la redirección.
+      // El simple hecho de tener este listener activo ayuda a Supabase a
+      // procesar el deep link y restaurar la sesión.
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -49,7 +76,6 @@ class _MyAppState extends State<MyApp> {
         '/login': (context) => const LoginPage(),
         '/home': (context) => const MainScreen(),
         '/add_transaction': (context) {
-          // ACTUALIZADO: Leemos el mapa de argumentos
           final args =
               ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>;
