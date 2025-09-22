@@ -19,27 +19,20 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      // ESTA ES LA ÚNICA LLAMADA QUE NECESITAS
       await supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        // Supabase maneja los redirects automáticamente en web.
-        // En un futuro, aquí configuraríamos el deep link para Android/iOS.
         redirectTo: kIsWeb
             ? null
             : 'io.supabase.flutterquickstart://login-callback/',
       );
-
-      // ¡Y ya está! Supabase gestiona todo.
-      // No necesitamos navegar manualmente, Supabase lo hará por nosotros
-      // al detectar el cambio de sesión, pero por ahora lo dejamos así.
+      // ¡Hemos quitado el bloque "finally"!
+      // La animación ahora se mantendrá hasta que el listener de main.dart nos saque de esta pantalla.
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al iniciar sesión: $error')),
         );
-      }
-    } finally {
-      if (mounted) {
+        // Si hay un error, sí detenemos la animación.
         setState(() => _isLoading = false);
       }
     }

@@ -40,24 +40,26 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _recoverSession();
+    _setupAuthListener();
   }
 
   @override
   void dispose() {
-    // Es importante cancelar la suscripción para evitar fugas de memoria
     _authStateSubscription?.cancel();
     super.dispose();
   }
 
-  void _recoverSession() {
-    // Esta función se asegura de que la sesión se restaure
-    // cuando la app vuelve del navegador después del login.
+  void _setupAuthListener() {
     _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
       final session = data.session;
-      // No necesitamos hacer nada aquí, el SplashPage se encargará de la redirección.
-      // El simple hecho de tener este listener activo ayuda a Supabase a
-      // procesar el deep link y restaurar la sesión.
+      final navigator = Navigator.of(context);
+      if (session != null) {
+        // Si hay una sesión, vamos a la pantalla principal
+        navigator.pushReplacementNamed('/home');
+      } else {
+        // Si no hay sesión, vamos a la pantalla de login
+        navigator.pushReplacementNamed('/login');
+      }
     });
   }
 
