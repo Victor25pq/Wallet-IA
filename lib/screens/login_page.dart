@@ -19,21 +19,32 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
+      final redirectTo = kIsWeb
+          ? null
+          : 'io.supabase.flutterquickstart://login-callback/';
+
+      // --- NUEVO: AÑADIR ESTE PRINT ---
+      print('Iniciando signInWithOAuth con redirectTo: $redirectTo');
+
       await supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb
-            ? null
-            : 'io.supabase.flutterquickstart://login-callback/',
+        redirectTo: redirectTo,
       );
-      // ¡Hemos quitado el bloque "finally"!
-      // La animación ahora se mantendrá hasta que el listener de main.dart nos saque de esta pantalla.
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (mounted) {
+        // --- NUEVO: AÑADIR ESTOS PRINTS ---
+        print('!!!!!!!!!! ERROR EN signInWithOAuth !!!!!!!!!!');
+        print('Error: $error');
+        print('StackTrace: $stackTrace');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al iniciar sesión: $error')),
         );
-        // Si hay un error, sí detenemos la animación.
-        setState(() => _isLoading = false);
+      }
+    } finally {
+      // No cambiaremos el finally por ahora, aunque no es ideal,
+      // queremos ver si el 'catch' nos da alguna pista.
+      if (mounted) {
+        // setState(() => _isLoading = false); // Comentado temporalmente
       }
     }
   }

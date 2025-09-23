@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:login_app/models/finance_models.dart';
 import 'package:login_app/services/supabase_service.dart';
-import 'package:login_app/utils/icon_helper.dart';
 
 const List<IconData> walletIcons = [
   Icons.account_balance_wallet,

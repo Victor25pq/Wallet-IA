@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../data/mock_data.dart';
 import '../models/finance_models.dart';
 // USAMOS 'hide' PARA OCULTAR LA DEFINICIÓN ANTIGUA Y EVITAR EL CONFLICTO
-import '../screens/add_transaction_page.dart' hide TransactionType;
+import '../screens/add_transaction_page.dart';
 
 class TransactionList extends StatefulWidget {
   final List<Transaction> transactions;

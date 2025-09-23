@@ -27,41 +27,9 @@ Future<void> main() async {
 
 final supabase = Supabase.instance.client;
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
+  // Cambiado de StatefulWidget a StatelessWidget
   const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  StreamSubscription<AuthState>? _authStateSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _setupAuthListener();
-  }
-
-  @override
-  void dispose() {
-    _authStateSubscription?.cancel();
-    super.dispose();
-  }
-
-  void _setupAuthListener() {
-    _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
-      final session = data.session;
-      final navigator = Navigator.of(context);
-      if (session != null) {
-        // Si hay una sesión, vamos a la pantalla principal
-        navigator.pushReplacementNamed('/home');
-      } else {
-        // Si no hay sesión, vamos a la pantalla de login
-        navigator.pushReplacementNamed('/login');
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +40,12 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      initialRoute: '/', // La app siempre empieza en la SplashPage
       routes: {
         '/': (context) => const SplashPage(),
         '/login': (context) => const LoginPage(),
         '/home': (context) => const MainScreen(),
+        // ... (el resto de tus rutas se mantienen igual)
         '/add_transaction': (context) {
           final args =
               ModalRoute.of(context)!.settings.arguments

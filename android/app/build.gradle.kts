@@ -55,9 +55,14 @@ android {
             // 2. Aquí dejamos solo la configuración para "release"
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
-        proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+}
+
+// --- AÑADIR LA LÍNEA AQUÍ ---
+dependencies {
+    implementation("com.google.android.play:core:1.10.3")
 }
 
 flutter {
