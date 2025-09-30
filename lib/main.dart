@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:login_app/models/finance_models.dart';
 import 'package:login_app/screens/main_screen.dart';
-import 'package:login_app/screens/splash_page.dart';
+import 'package:login_app/screens/splash_page.dart'; // Mantendremos tu splash page
 import 'package:login_app/screens/transfer_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_page.dart';
@@ -28,7 +28,6 @@ Future<void> main() async {
 final supabase = Supabase.instance.client;
 
 class MyApp extends StatelessWidget {
-  // Cambiado de StatefulWidget a StatelessWidget
   const MyApp({super.key});
 
   @override
@@ -40,12 +39,13 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/', // La app siempre empieza en la SplashPage
+      // La ruta inicial ahora será la SplashPage, que nos redirigirá
+      initialRoute: '/',
       routes: {
-        '/': (context) => const SplashPage(),
+        // La SplashPage ahora decide a dónde ir basado en el estado de autenticación
+        '/': (context) => const AuthRedirect(),
         '/login': (context) => const LoginPage(),
         '/home': (context) => const MainScreen(),
-        // ... (el resto de tus rutas se mantienen igual)
         '/add_transaction': (context) {
           final args =
               ModalRoute.of(context)!.settings.arguments
@@ -59,5 +59,57 @@ class MyApp extends StatelessWidget {
         '/all_transactions': (context) => const AllTransactionsPage(),
       },
     );
+  }
+}
+
+// Este nuevo Widget escuchará los cambios de autenticación
+class AuthRedirect extends StatefulWidget {
+  const AuthRedirect({super.key});
+
+  @override
+  State<AuthRedirect> createState() => _AuthRedirectState();
+}
+
+class _AuthRedirectState extends State<AuthRedirect> {
+  StreamSubscription<AuthState>? _authStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inmediatamente después de que el primer frame es dibujado,
+    // revisamos la sesión y configuramos el oyente.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Si ya hay una sesión cuando la app arranca, vamos a /home
+      final currentSession = supabase.auth.currentSession;
+      if (currentSession != null) {
+        Navigator.of(context).pushReplacementNamed('/home');
+        return;
+      }
+
+      // Si no, nos quedamos en la Splash y escuchamos el siguiente cambio.
+      // Este oyente capturará el evento después del login de Google.
+      _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
+        final session = data.session;
+        if (session != null) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          // Si el evento no tiene sesión (ej. logout), vamos a /login
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    // Es muy importante cancelar la suscripción para evitar errores.
+    _authStateSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Muestra la pantalla de carga mientras se determina el estado de la sesión
+    return const SplashPage();
   }
 }
